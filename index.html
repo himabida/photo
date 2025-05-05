@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobooth Digital</title>
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            transition: all 0.3s;
+        }
+        
+        /* Halaman Utama */
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .page.active {
+            display: flex;
+        }
+        
+        /* Halaman 1 - Mulai */
+        #page-start {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        #page-start h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .start-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .start-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+        
+        /* Halaman 2 - Pilih Layout */
+        #page-layout {
+            background: white;
+        }
+        
+        .layout-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            max-width: 800px;
+        }
+        
+        .layout-option {
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .layout-option:hover {
+            border-color: #ff6b6b;
+            transform: translateY(-5px);
+        }
+        
+        .layout-option img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        /* Halaman 3 - Foto */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        
+        #video {
+            width: 100%;
+            border-radius: 10px;
+            border: 3px solid #ff6b6b;
+        }
+        
+        #canvas {
+            display: none;
+            width: 100%;
+            border-radius: 10px;
+        }
+        
+        .countdown {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #ff5252;
+        }
+        
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Halaman 4 - Editing */
+        .edit-options {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .edit-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .edit-section h3 {
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+        
+        .frame-colors, .stickers {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .frame-color, .sticker {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .frame-color:hover, .sticker:hover {
+            transform: scale(1.1);
+            border-color: #ff6b6b;
+        }
+        
+        .frame-color {
+            background: var(--color);
+        }
+        
+        .sticker {
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .final-photos {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .final-photo {
+            width: 100%;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Halaman 1 - Mulai -->
+    <div id="page-start" class="page active">
+        <h1>Photobooth Digital</h1>
+        <button class="start-btn" id="start-btn">Mulai Photobooth</button>
+    </div>
+    
+    <!-- Halaman 2 - Pilih Layout -->
+    <div id="page-layout" class="page">
+        <h2>Pilih Layout Foto</h2>
+        <p>Pilih layout untuk sesi fotomu</p>
+        
+        <div class="layout-options">
+            <div class="layout-option" data-layout="A" data-poses="4">
+                <div class="layout-preview" style="background: #eee; height: 150px; display: grid; grid-template-rows: repeat(4, 1fr); gap: 5px;">
+                    <div style="background: #ff6b6b;"></div>
+                    <div style="background: #667eea;"></div>
+                    <div style="background: #4CAF50;"></div>
+                    <div style="background: #FFC107;"></div>
+                </div>
+                <h3>Layout A</h3>
+                <p>4 Pose (Vertikal)</p>
+            </div>
+            
+            <div class="layout-option" data-layout="B" data-poses="3">
+                <div class="layout-preview" style="background: #eee; height: 150px; display: grid; grid-template-rows: repeat(3, 1fr); gap: 5px;">
+                    <div style="background: #ff6b6b;"></div>
+                    <div style="background: #667eea;"></div>
+                    <div style="background: #4CAF50;"></div>
+                </div>
+                <h3>Layout B</h3>
+                <p>3 Pose (Vertikal)</p>
+            </div>
+            
+            <div class="layout-option" data-layout="C" data-poses="2">
+                <div class="layout-preview" style="background: #eee; height: 150px; display: grid; grid-template-rows: repeat(2, 1fr); gap: 5px;">
+                    <div style="background: #ff6b6b;"></div>
+                    <div style="background: #667eea;"></div>
+                </div>
+                <h3>Layout C</h3>
+                <p>2 Pose (Vertikal)</p>
+            </div>
+            
+            <div class="layout-option" data-layout="D" data-poses="6">
+                <div class="layout-preview" style="background: #eee; height: 150px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); gap: 5px;">
+                    <div style="background: #ff6b6b;"></div>
+                    <div style="background: #667eea;"></div>
+                    <div style="background: #4CAF50;"></div>
+                    <div style="background: #FFC107;"></div>
+                    <div style="background: #9C27B0;"></div>
+                    <div style="background: #607D8B;"></div>
+                </div>
+                <h3>Layout D</h3>
+                <p>6 Pose (Grid 2x3)</p>
+            </div>
+            
+            <div class="layout-option" data-layout="E" data-poses="4">
+                <div class="layout-preview" style="background: #eee; height: 150px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 5px;">
+                    <div style="background: #ff6b6b;"></div>
+                    <div style="background: #667eea;"></div>
+                    <div style="background: #4CAF50;"></div>
+                    <div style="background: #FFC107;"></div>
+                </div>
+                <h3>Layout E</h3>
+                <p>4 Pose (Grid 2x2)</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Halaman 3 - Foto -->
+    <div id="page-photo" class="page">
+        <h2>Ambil Foto</h2>
+        
+        <div class="camera-container">
+            <div class="countdown" id="countdown" style="display: none;">3</div>
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <select id="filter">
+                <option value="none">Tanpa Filter</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="sepia">Sepia</option>
+                <option value="invert">Invert</option>
+                <option value="vintage">Vintage</option>
+                <option value="cool">Cool</option>
+                <option value="warm">Warm</option>
+                <option value="blackwhite">Hitam Putih</option>
+                <option value="blur">Blur</option>
+                <option value="hue-rotate">Pelangi</option>
+                <option value="contrast">Kontras Tinggi</option>
+                <option value="saturate">Saturasi</option>
+                <option value="neon">Neon</option>
+                <option value="shadow">Bayangan</option>
+                <option value="focus">Soft Focus</option>
+            </select>
+            
+            <select id="timer">
+                <option value="3">Countdown: 3 detik</option>
+                <option value="5">Countdown: 5 detik</option>
+                <option value="10">Countdown: 10 detik</option>
+            </select>
+            
+            <button class="control-btn" id="capture-btn">Ambil Foto</button>
+            <button class="control-btn" id="delete-btn">Hapus Terakhir</button>
+        </div>
+        
+        <div id="photo-preview" style="display: none;">
+            <h3>Pratinjau Foto</h3>
+            <div id="photos-container" class="final-photos"></div>
+            <button class="control-btn" id="continue-btn">Lanjut ke Editing</button>
+        </div>
+    </div>
+    
+    <!-- Halaman 4 - Editing -->
+    <div id="page-edit" class="page">
+        <h2>Edit Foto</h2>
+        
+        <div class="edit-section">
+            <h3>Warna Bingkai</h3>
+            <div class="frame-colors">
+                <div class="frame-color" style="--color: #ff6b6b;" data-color="#ff6b6b"></div>
+                <div class="frame-color" style="--color: #667eea;" data-color="#667eea"></div>
+                <div class="frame-color" style="--color: #4CAF50;" data-color="#4CAF50"></div>
+                <div class="frame-color" style="--color: #FFC107;" data-color="#FFC107"></div>
+                <div class="frame-color" style="--color: #9C27B0;" data-color="#9C27B0"></div>
+                <div class="frame-color" style="--color: #607D8B;" data-color="#607D8B"></div>
+                <div class="frame-color" style="--color: #E91E63;" data-color="#E91E63"></div>
+                <div class="frame-color" style="--color: #3F51B5;" data-color="#3F51B5"></div>
+                <div class="frame-color" style="--color: #00BCD4;" data-color="#00BCD4"></div>
+                <div class="frame-color" style="--color: #8BC34A;" data-color="#8BC34A"></div>
+            </div>
+        </div>
+        
+        <div class="edit-section">
+            <h3>Stiker</h3>
+            <div class="stickers">
+                <div class="sticker" data-sticker="heart" style="background-image: url('https://cdn-icons-png.flaticon.com/512/535/535183.png')"></div>
+                <div class="sticker" data-sticker="star" style="background-image: url('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')"></div>
+                <div class="sticker" data-sticker="smile" style="background-image: url('https://cdn-icons-png.flaticon.com/512/742/742751.png')"></div>
+                <div class="sticker" data-sticker="crown" style="background-image: url('https://cdn-icons-png.flaticon.com/512/2583/2583344.png')"></div>
+                <div class="sticker" data-sticker="music" style="background-image: url('https://cdn-icons-png.flaticon.com/512/3659/3659899.png')"></div>
+                <div class="sticker" data-sticker="camera" style="background-image: url('https://cdn-icons-png.flaticon.com/512/891/891398.png')"></div>
+                <div class="sticker" data-sticker="flower" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4147/4147711.png')"></div>
+                <div class="sticker" data-sticker="balloon" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4276/4276932.png')"></div>
+                <div class="sticker" data-sticker="gift" style="background-image: url('https://cdn-icons-png.flaticon.com/512/2583/2583454.png')"></div>
+                <div class="sticker" data-sticker="fire" style="background-image: url('https://cdn-icons-png.flaticon.com/512/599/599502.png')"></div>
+            </div>
+        </div>
+        
+        <div class="edit-section">
+            <h3>Hasil Akhir</h3>
+            <div id="final-result" class="final-photos"></div>
+            <button class="control-btn" id="download-btn">Download Foto</button>
+        </div>
+    </div>
+
+    <script>
+        // Variabel Global
+        let currentPage = "page-start";
+        let selectedLayout = null;
+        let totalPoses = 0;
+        let currentPose = 0;
+        let photos = [];
+        let countdownInterval = null;
+        let currentFilter = "none";
+        let selectedFrameColor = "#ff6b6b";
+        let selectedStickers = [];
+        
+        // Elemen DOM
+        const pages = document.querySelectorAll('.page');
+        const startBtn = document.getElementById('start-btn');
+        const layoutOptions = document.querySelectorAll('.layout-option');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const countdownEl = document.getElementById('countdown');
+        const filterSelect = document.getElementById('filter');
+        const timerSelect = document.getElementById('timer');
+        const captureBtn = document.getElementById('capture-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const continueBtn = document.getElementById('continue-btn');
+        const photosContainer = document.getElementById('photos-container');
+        const finalResult = document.getElementById('final-result');
+        const downloadBtn = document.getElementById('download-btn');
+        const frameColors = document.querySelectorAll('.frame-color');
+        const stickers = document.querySelectorAll('.sticker');
+        
+        // Filter
+        const filters = {
+            none: 'none',
+            grayscale: 'grayscale(100%)',
+            sepia: 'sepia(100%)',
+            invert: 'invert(100%)',
+            vintage: 'sepia(70%) brightness(80%) contrast(120%)',
+            cool: 'brightness(90%) contrast(110%) hue-rotate(180deg)',
+            warm: 'brightness(110%) contrast(110%) hue-rotate(-20deg)',
+            blackwhite: 'grayscale(100%) contrast(120%)',
+            blur: 'blur(2px)',
+            'hue-rotate': 'hue-rotate(90deg)',
+            contrast: 'contrast(200%)',
+            saturate: 'saturate(200%)',
+            neon: 'brightness(120%) contrast(120%) hue-rotate(45deg)',
+            shadow: 'brightness(90%) contrast(120%) drop-shadow(5px 5px 5px #333)',
+            focus: 'blur(1px) brightness(110%)'
+        };
+        
+        // Navigasi Halaman
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            currentPage = pageId;
+            
+            if (pageId === 'page-photo') {
+                initCamera();
+            }
+        }
+        
+        // Inisialisasi Kamera
+        function initCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                    };
+                })
+                .catch(err => {
+                    console.error("Error kamera:", err);
+                    alert("Tidak bisa mengakses kamera. Mohon izinkan akses kamera.");
+                });
+        }
+        
+        // Mulai Countdown
+        function startCountdown() {
+            let timeLeft = parseInt(timerSelect.value);
+            countdownEl.textContent = timeLeft;
+            countdownEl.style.display = 'flex';
+            
+            captureBtn.disabled = true;
+            
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                countdownEl.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownEl.style.display = 'none';
+                    takePhoto();
+                    
+                    // Jika masih ada pose tersisa, mulai countdown lagi
+                    if (currentPose < totalPoses - 1) {
+                        currentPose++;
+                        setTimeout(() => {
+                            startCountdown();
+                        }, 1000);
+                    } else {
+                        captureBtn.disabled = false;
+                        document.getElementById('photo-preview').style.display = 'block';
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Ambil Foto
+        function takePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.filter = filters[currentFilter];
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const photoData = canvas.toDataURL('image/png');
+            photos.push(photoData);
+            
+            // Update preview
+            updatePhotoPreview();
+        }
+        
+        // Update Preview Foto
+        function updatePhotoPreview() {
+            photosContainer.innerHTML = '';
+            photos.forEach((photo, index) => {
+                const img = document.createElement('img');
+                img.src = photo;
+                img.className = 'final-photo';
+                photosContainer.appendChild(img);
+            });
+        }
+        
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            showPage('page-layout');
+        });
+        
+        layoutOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                selectedLayout = option.dataset.layout;
+                totalPoses = parseInt(option.dataset.poses);
+                currentPose = 0;
+                photos = [];
+                showPage('page-photo');
+            });
+        });
+        
+        filterSelect.addEventListener('change', () => {
+            currentFilter = filterSelect.value;
+            video.style.filter = filters[currentFilter];
+        });
+        
+        captureBtn.addEventListener('click', () => {
+            startCountdown();
+        });
+        
+        deleteBtn.addEventListener('click', () => {
+            if (photos.length > 0) {
+                photos.pop();
+                updatePhotoPreview();
+                currentPose--;
+                
+                if (photos.length === 0) {
+                    document.getElementById('photo-preview').style.display = 'none';
+                }
+            }
+        });
+        
+        continueBtn.addEventListener('click', () => {
+            showPage('page-edit');
+            renderFinalPhotos();
+        });
+        
+        frameColors.forEach(color => {
+            color.addEventListener('click', () => {
+                selectedFrameColor = color.dataset.color;
+                renderFinalPhotos();
+            });
+        });
+        
+        stickers.forEach(sticker => {
+            sticker.addEventListener('click', () => {
+                const stickerType = sticker.dataset.sticker;
+                if (!selectedStickers.includes(stickerType)) {
+                    selectedStickers.push(stickerType);
+                    renderFinalPhotos();
+                }
+            });
+        });
+        
+        downloadBtn.addEventListener('click', () => {
+            // Buat canvas untuk semua foto
+            const finalCanvas = document.createElement('canvas');
+            const finalCtx = finalCanvas.getContext('2d');
+            
+            // Sesuaikan ukuran canvas dengan layout
+            if (selectedLayout === 'D') {
+                finalCanvas.width = 1000;
+                finalCanvas.height = 1500;
+            } else if (selectedLayout === 'E') {
+                finalCanvas.width = 1000;
+                finalCanvas.height = 1000;
+            } else {
+                finalCanvas.width = 600;
+                finalCanvas.height = photos.length * 600;
+            }
+            
+            // Gambar semua foto dengan frame dan stiker
+            finalCtx.fillStyle = selectedFrameColor;
+            finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            
+            // Simpan sebagai gambar dan download
+            finalCanvas.toBlob(blob => {
+                const link = document.createElement('a');
+                link.download = 'photobooth-result.png';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            });
+        });
+        
+        // Render foto akhir untuk editing
+        function renderFinalPhotos() {
+            finalResult.innerHTML = '';
+            photos.forEach(photo => {
+                const img = document.createElement('img');
+                img.src = photo;
+                img.className = 'final-photo';
+                img.style.border = `10px solid ${selectedFrameColor}`;
+                finalResult.appendChild(img);
+            });
+        }
+    </script>
+</body>
+</html>
