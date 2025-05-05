@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobooth Digital</title>
+    <style>
+        /* [Previous CSS code remains exactly the same until .edit-section] */
+
+        .edit-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .sticker {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 5px;
+        }
+
+        .sticker:hover {
+            transform: scale(1.1);
+            border-color: #ff6b6b;
+        }
+
+        .sticker-preview {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .photo-with-sticker {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            z-index: 100;
+            display: none;
+            animation: fadeInOut 3s;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- [Previous HTML code remains exactly the same until page-edit] -->
+
+    <!-- Halaman 4 - Editing -->
+    <div id="page-edit" class="page">
+        <h2>Edit Foto</h2>
+        
+        <div class="edit-section">
+            <h3>Warna Bingkai</h3>
+            <div class="frame-colors">
+                <div class="frame-color" style="--color: #ff6b6b;" data-color="#ff6b6b"></div>
+                <div class="frame-color" style="--color: #667eea;" data-color="#667eea"></div>
+                <div class="frame-color" style="--color: #4CAF50;" data-color="#4CAF50"></div>
+                <div class="frame-color" style="--color: #FFC107;" data-color="#FFC107"></div>
+                <div class="frame-color" style="--color: #9C27B0;" data-color="#9C27B0"></div>
+                <div class="frame-color" style="--color: #607D8B;" data-color="#607D8B"></div>
+                <div class="frame-color" style="--color: #E91E63;" data-color="#E91E63"></div>
+                <div class="frame-color" style="--color: #3F51B5;" data-color="#3F51B5"></div>
+                <div class="frame-color" style="--color: #00BCD4;" data-color="#00BCD4"></div>
+                <div class="frame-color" style="--color: #8BC34A;" data-color="#8BC34A"></div>
+            </div>
+        </div>
+        
+        <div class="edit-section">
+            <h3>Stiker</h3>
+            <div class="stickers">
+                <div class="sticker" data-sticker="heart" style="background-image: url('https://cdn-icons-png.flaticon.com/512/535/535183.png')"></div>
+                <div class="sticker" data-sticker="star" style="background-image: url('https://cdn-icons-png.flaticon.com/512/1828/1828884.png')"></div>
+                <div class="sticker" data-sticker="smile" style="background-image: url('https://cdn-icons-png.flaticon.com/512/742/742751.png')"></div>
+                <div class="sticker" data-sticker="crown" style="background-image: url('https://cdn-icons-png.flaticon.com/512/2583/2583344.png')"></div>
+                <div class="sticker" data-sticker="music" style="background-image: url('https://cdn-icons-png.flaticon.com/512/3659/3659899.png')"></div>
+                <div class="sticker" data-sticker="camera" style="background-image: url('https://cdn-icons-png.flaticon.com/512/891/891398.png')"></div>
+                <div class="sticker" data-sticker="flower" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4147/4147711.png')"></div>
+                <div class="sticker" data-sticker="balloon" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4276/4276932.png')"></div>
+                <div class="sticker" data-sticker="gift" style="background-image: url('https://cdn-icons-png.flaticon.com/512/2583/2583454.png')"></div>
+                <div class="sticker" data-sticker="fire" style="background-image: url('https://cdn-icons-png.flaticon.com/512/599/599502.png')"></div>
+            </div>
+        </div>
+        
+        <div class="edit-section">
+            <h3>Hasil Akhir</h3>
+            <div id="final-result" class="final-photos"></div>
+            <button class="control-btn" id="download-btn">Download Foto</button>
+        </div>
+
+        <div class="notification" id="download-notification">
+            Foto berhasil didownload!
+        </div>
+    </div>
+
+    <script>
+        // [Previous JavaScript code remains exactly the same until downloadBtn event listener]
+
+        // Variabel untuk stiker
+        let selectedStickers = [];
+        let stickerPositions = {};
+        let activeSticker = null;
+
+        // Render foto akhir untuk editing dengan stiker
+        function renderFinalPhotos() {
+            finalResult.innerHTML = '';
+            
+            photos.forEach((photo, photoIndex) => {
+                const container = document.createElement('div');
+                container.className = 'photo-with-sticker';
+                container.dataset.photoIndex = photoIndex;
+                
+                const img = document.createElement('img');
+                img.src = photo;
+                img.className = 'final-photo';
+                img.style.border = `10px solid ${selectedFrameColor}`;
+                container.appendChild(img);
+                
+                // Tambahkan stiker yang sudah dipilih
+                if (stickerPositions[photoIndex]) {
+                    stickerPositions[photoIndex].forEach(sticker => {
+                        const stickerEl = document.createElement('div');
+                        stickerEl.className = 'sticker-preview';
+                        stickerEl.style.backgroundImage = `url('${sticker.url}')`;
+                        stickerEl.style.left = `${sticker.x}px`;
+                        stickerEl.style.top = `${sticker.y}px`;
+                        container.appendChild(stickerEl);
+                    });
+                }
+                
+                finalResult.appendChild(container);
+            });
+
+            // Set up event listeners untuk menambahkan stiker
+            document.querySelectorAll('.photo-with-sticker').forEach(container => {
+                container.addEventListener('click', (e) => {
+                    if (activeSticker && e.target === container.querySelector('img')) {
+                        const rect = container.getBoundingClientRect();
+                        const x = e.clientX - rect.left - 40; // center the sticker
+                        const y = e.clientY - rect.top - 40;
+                        
+                        const photoIndex = parseInt(container.dataset.photoIndex);
+                        if (!stickerPositions[photoIndex]) {
+                            stickerPositions[photoIndex] = [];
+                        }
+                        
+                        stickerPositions[photoIndex].push({
+                            url: activeSticker.style.backgroundImage,
+                            x: x,
+                            y: y
+                        });
+                        
+                        renderFinalPhotos();
+                    }
+                });
+            });
+        }
+
+        // Event listener untuk stiker
+        stickers.forEach(sticker => {
+            sticker.addEventListener('click', () => {
+                activeSticker = sticker;
+            });
+        });
+
+        // Event listener untuk download
+        downloadBtn.addEventListener('click', () => {
+            // Buat canvas untuk setiap foto dengan stiker
+            const photoCanvases = [];
+            
+            document.querySelectorAll('.photo-with-sticker').forEach((container, index) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = container.querySelector('img');
+                
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                
+                // Gambar foto
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Gambar stiker
+                if (stickerPositions[index]) {
+                    stickerPositions[index].forEach(sticker => {
+                        const stickerImg = new Image();
+                        stickerImg.src = sticker.url.replace('url("', '').replace('")', '');
+                        ctx.drawImage(stickerImg, sticker.x, sticker.y, 80, 80);
+                    });
+                }
+                
+                photoCanvases.push(canvas);
+            });
+            
+            // Buat canvas final berdasarkan layout
+            const finalCanvas = document.createElement('canvas');
+            const finalCtx = finalCanvas.getContext('2d');
+            
+            // Sesuaikan ukuran canvas dengan layout
+            if (selectedLayout === 'D') {
+                // Layout D: 2x3 grid
+                finalCanvas.width = photoCanvases[0].width * 2;
+                finalCanvas.height = photoCanvases[0].height * 3;
+                
+                // Gambar semua foto
+                photoCanvases.forEach((canvas, index) => {
+                    const row = Math.floor(index / 2);
+                    const col = index % 2;
+                    finalCtx.drawImage(canvas, col * canvas.width, row * canvas.height);
+                });
+            } else if (selectedLayout === 'E') {
+                // Layout E: 2x2 grid
+                finalCanvas.width = photoCanvases[0].width * 2;
+                finalCanvas.height = photoCanvases[0].height * 2;
+                
+                // Gambar semua foto
+                photoCanvases.forEach((canvas, index) => {
+                    const row = Math.floor(index / 2);
+                    const col = index % 2;
+                    finalCtx.drawImage(canvas, col * canvas.width, row * canvas.height);
+                });
+            } else {
+                // Layout vertikal (A, B, C)
+                finalCanvas.width = photoCanvases[0].width;
+                finalCanvas.height = photoCanvases[0].height * photoCanvases.length;
+                
+                // Gambar semua foto
+                photoCanvases.forEach((canvas, index) => {
+                    finalCtx.drawImage(canvas, 0, index * canvas.height);
+                });
+            }
+            
+            // Tambahkan frame color
+            finalCtx.globalCompositeOperation = 'destination-over';
+            finalCtx.fillStyle = selectedFrameColor;
+            finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            finalCtx.globalCompositeOperation = 'source-over';
+            
+            // Simpan sebagai gambar dan download
+            finalCanvas.toBlob(blob => {
+                const link = document.createElement('a');
+                link.download = 'photobooth-result.png';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                
+                // Tampilkan notifikasi
+                const notification = document.getElementById('download-notification');
+                notification.style.display = 'block';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }, 'image/png');
+        });
+
+        // [Rest of the previous JavaScript code remains the same]
+    </script>
+</body>
+</html>
