@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobooth Digital</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+</head>
+<body>
+    <div class="photobooth-container">
+        <h1>📸 PHOTOBOOTH DIGITAL</h1>
+        
+        <!-- Kamera & Hasil -->
+        <div class="camera-section">
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+            <div id="face-overlay"></div>
+        </div>
+
+        <!-- Pilihan Frame Foto -->
+        <div class="frame-options">
+            <select id="frame-select">
+                <option value="none">Tanpa Frame</option>
+                <option value="polaroid">Polaroid</option>
+                <option value="wood">Kayu</option>
+                <option value="gold">Emas</option>
+                <option value="neon">Neon</option>
+                <option value="vintage">Vintage</option>
+            </select>
+        </div>
+
+        <!-- Filter Foto -->
+        <div class="filter-options">
+            <select id="filter">
+                <option value="none">Tanpa Filter</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="sepia">Sepia</option>
+                <option value="invert">Invert</option>
+                <option value="vintage">Vintage</option>
+                <option value="cool">Cool</option>
+                <option value="warm">Warm</option>
+                <option value="blackwhite">Hitam Putih</option>
+                <option value="blur">Blur</option>
+                <option value="hue-rotate">Pelangi</option>
+                <option value="contrast">Kontras Tinggi</option>
+                <option value="saturate">Saturasi</option>
+                <option value="neon">Neon</option>
+                <option value="shadow">Bayangan</option>
+                <option value="focus">Soft Focus</option>
+                <option value="smooth">Kulit Mulus</option>
+                <option value="glamour">Glamour</option>
+            </select>
+        </div>
+
+        <!-- Jumlah Foto -->
+        <div class="photo-count">
+            <button class="count-btn active" data-count="1">1 Foto</button>
+            <button class="count-btn" data-count="4">4 Foto</button>
+            <button class="count-btn" data-count="6">6 Foto</button>
+        </div>
+
+        <!-- Tombol Kontrol -->
+        <div class="controls">
+            <button id="capture">Ambil Foto!</button>
+            <button id="delete-last">Hapus Terakhir</button>
+            <button id="download">Download</button>
+        </div>
+
+        <!-- Grid Foto -->
+        <div id="photo-grid"></div>
+    </div>
+
+    <audio id="shutter-sound" src="camera-shutter-314056.mp3" preload="auto"></audio>
+    <script src="script.js"></script>
+</body>
+</html>
