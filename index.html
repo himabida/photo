@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photobooth Digital</title>
+    <style>
+        /* CSS */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .photobooth-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            color: #ff6b6b;
+        }
+
+        .camera-section {
+            position: relative;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 10px;
+            border: 3px solid #ff6b6b;
+            transition: all 0.3s;
+        }
+
+        #canvas {
+            display: none;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        #face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #ff6b6b;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        select:hover, button:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .count-btn {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .count-btn.active {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        #photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .photo-item {
+            width: 100%;
+            border-radius: 5px;
+            border: 2px solid #ff6b6b;
+        }
+
+        .face-box {
+            position: absolute;
+            border: 3px solid blue;
+            pointer-events: none;
+            transition: all 0.1s;
+        }
+
+        .expression-label {
+            position: absolute;
+            background: rgba(0, 0, 255, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .frame-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .frame-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .user-image {
+            position: relative;
+            z-index: 2;
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            margin: 10% auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="photobooth-container">
+        <h1>📸 PHOTOBOOTH DIGITAL</h1>
+        
+        <!-- Kamera & Hasil -->
+        <div class="camera-section">
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+            <div id="face-overlay"></div>
+        </div>
+
+        <!-- Kontrol -->
+        <div class="controls">
+            <!-- Pilihan Frame -->
+            <select id="frame-select">
+                <option value="none">Tanpa Frame</option>
+                <option value="frame1">Frame 1</option>
+                <option value="frame2">Frame 2</option>
+            </select>
+
+            <!-- Pilihan Filter -->
+            <select id="filter">
+                <option value="none">Tanpa Filter</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="sepia">Sepia</option>
+                <option value="invert">Invert</option>
+                <option value="vintage">Vintage</option>
+                <option value="cool">Cool</option>
+                <option value="warm">Warm</option>
+                <option value="blackwhite">Hitam Putih</option>
+                <option value="blur">Blur</option>
+                <option value="hue-rotate">Pelangi</option>
+                <option value="contrast">Kontras Tinggi</option>
+                <option value="saturate">Saturasi</option>
+                <option value="neon">Neon</option>
+                <option value="shadow">Bayangan</option>
+                <option value="focus">Soft Focus</option>
+                <option value="smooth">Kulit Mulus</option>
+                <option value="glamour">Glamour</option>
+            </select>
+
+            <!-- Jumlah Foto -->
+            <div class="photo-count">
+                <button class="count-btn active" data-count="1">1 Foto</button>
+                <button class="count-btn" data-count="4">4 Foto</button>
+                <button class="count-btn" data-count="6">6 Foto</button>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <button id="capture">Ambil Foto!</button>
+            <button id="delete-last">Hapus Terakhir</button>
+            <button id="download">Download</button>
+        </div>
+
+        <!-- Grid Foto -->
+        <div id="photo-grid"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script>
+        // Variabel Global
+        let currentFilter = "none";
+        let currentFrame = "none";
+        let photosTaken = 0;
+        let maxPhotos = 1;
+        let faceExpression = "neutral";
+        let handGesture = "none";
+
+        // Elemen DOM
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const faceOverlay = document.getElementById('face-overlay');
+        const filterSelect = document.getElementById('filter');
+        const frameSelect = document.getElementById('frame-select');
+        const photoGrid = document.getElementById('photo-grid');
+        const countButtons = document.querySelectorAll('.count-btn');
+        const ctx = canvas.getContext('2d');
+
+        // Filter
+        const filters = {
+            none: 'none',
+            grayscale: 'grayscale(100%)',
+            sepia: 'sepia(100%)',
+            invert: 'invert(100%)',
+            vintage: 'sepia(70%) brightness(80%) contrast(120%)',
+            cool: 'brightness(90%) contrast(110%) hue-rotate(180deg)',
+            warm: 'brightness(110%) contrast(110%) hue-rotate(-20deg)',
+            blackwhite: 'grayscale(100%) contrast(120%)',
+            blur: 'blur(2px)',
+            'hue-rotate': 'hue-rotate(90deg)',
+            contrast: 'contrast(200%)',
+            saturate: 'saturate(200%)',
+            neon: 'brightness(120%) contrast(120%) hue-rotate(45deg)',
+            shadow: 'brightness(90%) contrast(120%) drop-shadow(5px 5px 5px #333)',
+            focus: 'blur(1px) brightness(110%)',
+            smooth: 'contrast(110%) brightness(110%) saturate(110%) blur(0.5px)',
+            glamour: 'contrast(120%) brightness(105%) hue-rotate(10deg)'
+        };
+
+        // Template Frame
+        const frameTemplates = {
+            none: null,
+            frame1: {
+                image: 'conference.jpg', // Ganti dengan URL frame 1
+                position: { x: 0, y: 0, width: 640, height: 480 }
+            },
+            frame2: {
+                image: 'news.jpg', // Ganti dengan URL frame 2
+                position: { x: 0, y: 0, width: 640, height: 480 }
+            }
+        };
+
+        // Inisialisasi Kamera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    initFaceDetection();
+                };
+            })
+            .catch(err => {
+                console.error("Error kamera:", err);
+                alert("Tidak bisa mengakses kamera. Mohon izinkan akses kamera.");
+            });
+
+        // Event Listener
+        filterSelect.addEventListener('change', () => {
+            currentFilter = filterSelect.value;
+            video.style.filter = filters[currentFilter];
+        });
+
+        frameSelect.addEventListener('change', (e) => {
+            currentFrame = e.target.value;
+        });
+
+        countButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                countButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                maxPhotos = parseInt(btn.dataset.count);
+            });
+        });
+
+        document.getElementById('capture').addEventListener('click', async () => {
+            if (photosTaken >= maxPhotos) return;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.filter = video.style.filter;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Tambahkan frame jika dipilih
+            if (currentFrame !== 'none') {
+                const frame = new Image();
+                frame.crossOrigin = "anonymous";
+                frame.src = frameTemplates[currentFrame].image;
+                await new Promise(resolve => {
+                    frame.onload = resolve;
+                });
+                
+                // Gambar frame sebagai background
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.drawImage(
+                    frame,
+                    frameTemplates[currentFrame].position.x,
+                    frameTemplates[currentFrame].position.y,
+                    frameTemplates[currentFrame].position.width,
+                    frameTemplates[currentFrame].position.height
+                );
+                
+                // Gambar ulang video di atas frame
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.filter = video.style.filter;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // Tambahkan ke grid
+            const photoItem = document.createElement('img');
+            photoItem.src = canvas.toDataURL('image/png');
+            photoItem.classList.add('photo-item');
+            photoGrid.appendChild(photoItem);
+            
+            photosTaken++;
+        });
+
+        document.getElementById('delete-last').addEventListener('click', () => {
+            const photos = document.querySelectorAll('.photo-item');
+            if (photos.length > 0) {
+                photos[photos.length - 1].remove();
+                photosTaken--;
+            }
+        });
+
+        document.getElementById('download').addEventListener('click', () => {
+            if (photosTaken === 0) return;
+            
+            const gridCanvas = document.createElement('canvas');
+            const gridCtx = gridCanvas.getContext('2d');
+            const gridSize = Math.ceil(Math.sqrt(photosTaken));
+            
+            gridCanvas.width = video.videoWidth * gridSize;
+            gridCanvas.height = video.videoHeight * gridSize;
+            
+            const photoItems = document.querySelectorAll('.photo-item');
+            photoItems.forEach((photo, i) => {
+                const x = (i % gridSize) * video.videoWidth;
+                const y = Math.floor(i / gridSize) * video.videoHeight;
+                gridCtx.drawImage(photo, x, y, video.videoWidth, video.videoHeight);
+            });
+            
+            gridCanvas.toBlob(blob => {
+                saveAs(blob, 'photobooth-digital.png');
+            });
+        });
+
+        // Deteksi Wajah dan Tangan
+        const faceMesh = new FaceMesh({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+        });
+
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+        });
+        hands.setOptions({
+            maxNumHands: 2,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+        });
+
+        function onResultsFaceMesh(results) {
+            faceOverlay.innerHTML = '';
+            
+            if (results.multiFaceLandmarks) {
+                const landmarks = results.multiFaceLandmarks[0];
+                
+                // Hitung bounding box wajah
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                for (const landmark of landmarks) {
+                    minX = Math.min(minX, landmark.x);
+                    minY = Math.min(minY, landmark.y);
+                    maxX = Math.max(maxX, landmark.x);
+                    maxY = Math.max(maxY, landmark.y);
+                }
+                
+                // Deteksi ekspresi (lebih akurat)
+                const mouthOpen = landmarks[13].y - landmarks[14].y > 0.05;
+                const eyebrowsRaised = landmarks[159].y < landmarks[386].y - 0.02;
+                const mouthCorners = landmarks[61].x - landmarks[291].x;
+                
+                if (mouthOpen && eyebrowsRaised) faceExpression = "Kaget";
+                else if (mouthOpen && mouthCorners > 0.1) faceExpression = "Senyum";
+                else if (eyebrowsRaised && mouthCorners < -0.1) faceExpression = "Marah";
+                else if (eyebrowsRaised) faceExpression = "Sedih";
+                else faceExpression = "Netral";
+                
+                // Gambar kotak biru di wajah
+                const box = document.createElement('div');
+                box.className = 'face-box';
+                box.style.left = `${minX * 100}%`;
+                box.style.top = `${minY * 100}%`;
+                box.style.width = `${(maxX - minX) * 100}%`;
+                box.style.height = `${(maxY - minY) * 100}%`;
+                
+                // Label ekspresi
+                const label = document.createElement('div');
+                label.className = 'expression-label';
+                label.textContent = `Ekspresi: ${faceExpression}`;
+                label.style.left = `${minX * 100}%`;
+                label.style.top = `${minY * 100 - 30}px`;
+                
+                faceOverlay.appendChild(box);
+                faceOverlay.appendChild(label);
+            }
+        }
+
+        function onResultsHands(results) {
+            if (results.multiHandLandmarks) {
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Deteksi gesture tangan
+                const thumbTip = landmarks[4];
+                const indexTip = landmarks[8];
+                const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+                
+                if (distance < 0.05) handGesture = "love";
+                else handGesture = "none";
+                
+                // Update emoji jika perlu
+                updateEmoji();
+            }
+        }
+
+        function updateEmoji() {
+            const emoji = document.querySelector('.emoji');
+            if (emoji) {
+                emoji.textContent = handGesture === "love" ? "❤️" : "";
+            }
+        }
+
+        faceMesh.onResults(onResultsFaceMesh);
+        hands.onResults(onResultsHands);
+
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await faceMesh.send({ image: video });
+                await hands.send({ image: video });
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        function initFaceDetection() {
+            console.log("Deteksi wajah dan tangan siap!");
+        }
+    </script>
+</body>
+</html>
